@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type Step =
   | "jobQuestion"
@@ -68,6 +69,41 @@ export default function CancelFlowPage() {
   const [decidedFeedback, setDecidedFeedback] = useState("");
 
   const [otherFeedback, setOtherFeedback] = useState("");
+
+  const [variant, setVariant] = useState<"A" | "B" | null>(null);
+
+  const [loadingVariant, setLoadingVariant] = useState(true);
+
+  useEffect(() => {
+    async function fetchVariant() {
+      try {
+        const res = await fetch("/cancel/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: "550e8400-e29b-41d4-a716-446655440001", // user1@example.com
+          }),
+          // ⚠️ replace with real user id
+        });
+        if (!res.ok) throw new Error("Failed to fetch variant");
+        const data = await res.json();
+        setVariant(data.variant);
+      } catch (e) {
+        console.error("Variant fetch failed", e);
+      } finally {
+        setLoadingVariant(false);
+      }
+    }
+    fetchVariant();
+  }, []);
+
+  if (loadingVariant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -657,20 +693,46 @@ export default function CancelFlowPage() {
               </p>
 
               <div className="p-4 rounded-xl border border-purple-300 bg-purple-50 space-y-3">
-                <p className="text-center font-medium text-gray-900">
-                  Here’s <span className="font-extrabold">50% off</span> until
-                  you find a job.
-                </p>
-                <p className="text-center text-purple-700 text-lg font-bold">
-                  $12.50<span className="text-sm font-normal">/month</span>{" "}
-                  <span className="line-through text-gray-400">$25/month</span>
-                </p>
-                <button
-                  onClick={() => setStep("downsellAccepted")}
-                  className="w-full rounded-lg bg-green-600 text-white font-medium px-4 py-2 hover:bg-green-700"
-                >
-                  Get 50% off
-                </button>
+                {variant === "B" ? (
+                  <>
+                    <p className="text-center font-medium text-gray-900">
+                      Here’s <span className="font-extrabold">$10 off</span>{" "}
+                      until you find a job.
+                    </p>
+                    <p className="text-center text-purple-700 text-lg font-bold">
+                      $15<span className="text-sm font-normal">/month</span>{" "}
+                      <span className="line-through text-gray-400">
+                        $25/month
+                      </span>
+                    </p>
+                    <button
+                      onClick={() => setStep("downsellAccepted")}
+                      className="w-full rounded-lg bg-green-600 text-white font-medium px-4 py-2 hover:bg-green-700"
+                    >
+                      Get $10 off
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-center font-medium text-gray-900">
+                      Here’s <span className="font-extrabold">50% off</span>{" "}
+                      until you find a job.
+                    </p>
+                    <p className="text-center text-purple-700 text-lg font-bold">
+                      $12.50<span className="text-sm font-normal">/month</span>{" "}
+                      <span className="line-through text-gray-400">
+                        $25/month
+                      </span>
+                    </p>
+                    <button
+                      onClick={() => setStep("downsellAccepted")}
+                      className="w-full rounded-lg bg-green-600 text-white font-medium px-4 py-2 hover:bg-green-700"
+                    >
+                      Get 50% off
+                    </button>
+                  </>
+                )}
+
                 <p className="text-xs text-gray-500 text-center">
                   You won’t be charged until your next billing date.
                 </p>
@@ -713,7 +775,10 @@ export default function CancelFlowPage() {
                 on your current plan. <br />
                 Starting from <span className="font-semibold">XX date</span>,
                 your monthly payment will be{" "}
-                <span className="font-semibold">$12.50</span>.
+                <span className="font-semibold">
+                  {variant === "B" ? "$15" : "$12.50"}
+                </span>
+                .
               </p>
               <p className="text-xs text-gray-500 italic">
                 You can cancel anytime before then.
@@ -837,8 +902,17 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -914,8 +988,17 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -1077,8 +1160,17 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -1144,9 +1236,19 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
+
                 <button
                   disabled={jobsFeedback.trim().length < 25}
                   onClick={() => setStep("doneCancel")}
@@ -1208,9 +1310,19 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
+
                 <button
                   disabled={jobsFeedback.trim().length < 25}
                   onClick={() => setStep("doneCancel")}
@@ -1272,9 +1384,19 @@ export default function CancelFlowPage() {
                   onClick={() => setStep("downsellAccepted")}
                   className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
                 >
-                  Get 50% off | $12.50{" "}
-                  <span className="line-through text-gray-300">$25</span>
+                  {variant === "B" ? (
+                    <>
+                      Get $10 off | $15{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  ) : (
+                    <>
+                      Get 50% off | $12.50{" "}
+                      <span className="line-through text-gray-300">$25</span>
+                    </>
+                  )}
                 </button>
+
                 <button
                   disabled={jobsFeedback.trim().length < 25}
                   onClick={() => setStep("doneCancel")}
