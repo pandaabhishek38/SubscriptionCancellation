@@ -15,7 +15,17 @@ type Step =
   | "visaTypeNoSupport"
   | "visaTypeNoMMYes"
   | "visaTypeNoMMNo"
-  | "doneNoSupport";
+  | "doneNoSupport"
+  | "downsellOffer"
+  | "downsellAccepted"
+  | "downsellReason"
+  | "downsellReasonMain"
+  | "reasonTooExpensive"
+  | "reasonPlatform"
+  | "reasonJobs"
+  | "reasonNotMove"
+  | "reasonOther"
+  | "doneCancel";
 
 export default function CancelFlowPage() {
   const router = useRouter();
@@ -40,6 +50,24 @@ export default function CancelFlowPage() {
   const [visaType, setVisaType] = useState("");
 
   const [visaTypeNoSupport, setVisaTypeNoSupport] = useState("");
+
+  const [mainReason, setMainReason] = useState("");
+
+  const [reasonError, setReasonError] = useState(false);
+
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const [priceError, setPriceError] = useState("");
+
+  const [platformFeedback, setPlatformFeedback] = useState("");
+
+  const [platformError, setPlatformError] = useState(false);
+
+  const [jobsFeedback, setJobsFeedback] = useState("");
+
+  const [decidedFeedback, setDecidedFeedback] = useState("");
+
+  const [otherFeedback, setOtherFeedback] = useState("");
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -89,7 +117,7 @@ export default function CancelFlowPage() {
                   Yes, I’ve found a job
                 </button>
                 <button
-                  onClick={() => alert("Next: Not yet branch")}
+                  onClick={() => setStep("downsellOffer")}
                   className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-800 text-sm sm:text-base font-medium hover:bg-gray-50"
                 >
                   Not yet – I’m still looking
@@ -604,6 +632,702 @@ export default function CancelFlowPage() {
                 Complete cancellation
               </button>
             </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 12: Downsell Offer */}
+        {step === "downsellOffer" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                We built this to help you land the job, this makes it a little
+                easier.
+              </h3>
+              <p className="text-sm text-gray-600">
+                We’ve been there and we’re here to help you.
+              </p>
+
+              <div className="p-4 rounded-xl border border-purple-300 bg-purple-50 space-y-3">
+                <p className="text-center font-medium text-gray-900">
+                  Here’s <span className="font-extrabold">50% off</span> until
+                  you find a job.
+                </p>
+                <p className="text-center text-purple-700 text-lg font-bold">
+                  $12.50<span className="text-sm font-normal">/month</span>{" "}
+                  <span className="line-through text-gray-400">$25/month</span>
+                </p>
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-lg bg-green-600 text-white font-medium px-4 py-2 hover:bg-green-700"
+                >
+                  Get 50% off
+                </button>
+                <p className="text-xs text-gray-500 text-center">
+                  You won’t be charged until your next billing date.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setStep("downsellReason")}
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-800 text-sm sm:text-base font-medium hover:bg-gray-50"
+              >
+                No thanks
+              </button>
+            </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 13: Downsell Accepted */}
+        {step === "downsellAccepted" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Great choice, mate!
+              </h3>
+              <p className="text-lg text-gray-700">
+                You’re still on the path to your dream role.{" "}
+                <span className="text-purple-600 font-semibold">
+                  Let’s make it happen together!
+                </span>
+              </p>
+              <p className="text-sm text-gray-600">
+                You’ve got <span className="font-semibold">XX days</span> left
+                on your current plan. <br />
+                Starting from <span className="font-semibold">XX date</span>,
+                your monthly payment will be{" "}
+                <span className="font-semibold">$12.50</span>.
+              </p>
+              <p className="text-xs text-gray-500 italic">
+                You can cancel anytime before then.
+              </p>
+
+              <button
+                onClick={() => router.push("/")}
+                className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
+              >
+                Land your dream role
+              </button>
+            </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 14: Downsell Reason */}
+        {step === "downsellReason" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Help us understand how you were using Migrate Mate.
+              </h3>
+              <p className="text-sm text-gray-600">
+                Mind letting us know why you’re cancelling? It helps us
+                understand your experience and improve the platform.
+              </p>
+
+              {/* Roles applied */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  How many roles did you apply for through Migrate Mate?
+                </p>
+                <div className="flex space-x-2">
+                  {["0", "1-5", "6-20", "20+"].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() =>
+                        setAnswers((prev) => ({ ...prev, rolesApplied: opt }))
+                      }
+                      className={`flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium transition
+                ${
+                  answers.rolesApplied === opt
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-800 hover:bg-purple-50"
+                }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Companies emailed */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  How many companies did you email directly?
+                </p>
+                <div className="flex space-x-2">
+                  {["0", "1-5", "6-20", "20+"].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          companiesEmailed: opt,
+                        }))
+                      }
+                      className={`flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium transition
+                ${
+                  answers.companiesEmailed === opt
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-800 hover:bg-purple-50"
+                }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Companies interviewed */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  How many different companies did you interview with?
+                </p>
+                <div className="flex space-x-2">
+                  {["0", "1-2", "3-5", "5+"].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          companiesInterviewed: opt,
+                        }))
+                      }
+                      className={`flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium transition
+                ${
+                  answers.companiesInterviewed === opt
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-800 hover:bg-purple-50"
+                }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+
+                <button
+                  onClick={() => setStep("downsellReasonMain")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-red-600 text-white hover:bg-red-700"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 15: Main reason for cancelling */}
+        {step === "downsellReasonMain" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason for cancelling?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              {reasonError && (
+                <p className="text-sm text-red-600">
+                  To help us understand your experience, please select a reason
+                  for cancelling*
+                </p>
+              )}
+
+              <div className="space-y-2">
+                {[
+                  "Too expensive",
+                  "Platform not helpful",
+                  "Not enough relevant jobs",
+                  "Decided not to move",
+                  "Other",
+                ].map((opt) => (
+                  <label
+                    key={opt}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="mainReason"
+                      value={opt}
+                      checked={mainReason === opt}
+                      onChange={(e) => {
+                        setMainReason(e.target.value);
+                        setReasonError(false);
+                      }}
+                      className="h-4 w-4 text-black focus:ring-black border-gray-300"
+                    />
+                    <span className="text-sm text-gray-800">{opt}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!mainReason) {
+                      setReasonError(true);
+                      return;
+                    }
+
+                    if (mainReason === "Too expensive") {
+                      setStep("reasonTooExpensive"); // Step 16
+                    } else if (mainReason === "Platform not helpful") {
+                      setStep("reasonPlatform"); // Step 17
+                    } else if (mainReason === "Not enough relevant jobs") {
+                      setStep("reasonJobs"); // Step 18
+                    } else if (mainReason === "Decided not to move") {
+                      setStep("reasonNotMove"); // Step 19
+                    } else if (mainReason === "Other") {
+                      setStep("reasonOther"); // Step 20
+                    }
+                  }}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    mainReason
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 16: Too Expensive → ask max price */}
+        {step === "reasonTooExpensive" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason for cancelling?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  Too expensive
+                </p>
+                <label className="block text-sm text-gray-700">
+                  What would be the maximum you would be willing to pay?*
+                </label>
+                <input
+                  type="text"
+                  placeholder="$"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="w-full rounded-lg border border-gray-400 text-gray-800 p-3 text-sm
+             placeholder-gray-500 focus:ring-2 focus:ring-black focus:border-black focus:outline-none"
+                />
+
+                {priceError && (
+                  <p className="text-sm text-red-600">{priceError}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!maxPrice.trim()) {
+                      setPriceError(
+                        "Please enter a maximum price before continuing."
+                      );
+                      return;
+                    }
+                    alert("Proceed with cancellation flow");
+                  }}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    maxPrice.trim()
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Complete cancellation
+                </button>
+              </div>
+            </div>
+
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 17: Platform not helpful */}
+        {step === "reasonPlatform" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800">
+                What can we change to make the platform more helpful?*
+              </p>
+
+              {platformError && (
+                <p className="text-sm text-red-600">
+                  Please enter at least 25 characters so we can understand your
+                  feedback*
+                </p>
+              )}
+
+              <textarea
+                rows={4}
+                placeholder="Type your feedback..."
+                value={platformFeedback}
+                onChange={(e) => {
+                  setPlatformFeedback(e.target.value);
+                  setPlatformError(false);
+                }}
+                className="w-full rounded-lg border border-gray-400 text-gray-800 placeholder-gray-500
+           p-3 text-sm focus:ring-2 focus:ring-black focus:border-black focus:outline-none"
+              />
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({platformFeedback.length}/25)
+              </p>
+
+              {/* Action buttons */}
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+
+                <button
+                  disabled={platformFeedback.trim().length < 25}
+                  onClick={() => setStep("doneCancel")}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    platformFeedback.trim().length >= 25
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Complete cancellation
+                </button>
+              </div>
+            </div>
+
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 18: Not enough jobs */}
+        {step === "reasonJobs" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800">
+                In which way can we make the jobs more relevant?*
+              </p>
+              <textarea
+                value={jobsFeedback}
+                onChange={(e) => setJobsFeedback(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none text-gray-800"
+                rows={3}
+                placeholder="Type your feedback..."
+              />
+              {jobsFeedback.length < 25 && (
+                <p className="text-sm text-red-600">
+                  Please enter at least 25 characters so we can understand your
+                  feedback*
+                </p>
+              )}
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+                <button
+                  disabled={jobsFeedback.trim().length < 25}
+                  onClick={() => setStep("doneCancel")}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    jobsFeedback.trim().length >= 25
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Complete cancellation
+                </button>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 19: Decided not to move */}
+        {step === "reasonNotMove" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800">
+                What changed for you not to move?*
+              </p>
+              <textarea
+                value={jobsFeedback}
+                onChange={(e) => setJobsFeedback(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none text-gray-800"
+                rows={3}
+                placeholder="Type your feedback..."
+              />
+              {jobsFeedback.length < 25 && (
+                <p className="text-sm text-red-600">
+                  Please enter at least 25 characters so we can understand your
+                  feedback*
+                </p>
+              )}
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+                <button
+                  disabled={jobsFeedback.trim().length < 25}
+                  onClick={() => setStep("doneCancel")}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    jobsFeedback.trim().length >= 25
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Complete cancellation
+                </button>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 20: Other */}
+        {step === "reasonOther" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                What’s the main reason?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please take a minute to let us know why:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800">
+                What would have helped you the most?*
+              </p>
+              <textarea
+                value={jobsFeedback}
+                onChange={(e) => setJobsFeedback(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none text-gray-800"
+                rows={3}
+                placeholder="Type your feedback..."
+              />
+              {jobsFeedback.length < 25 && (
+                <p className="text-sm text-red-600">
+                  Please enter at least 25 characters so we can understand your
+                  feedback*
+                </p>
+              )}
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              <div className="flex flex-col space-y-3 pt-4">
+                <button
+                  onClick={() => setStep("downsellAccepted")}
+                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-green-600 text-white hover:bg-green-700"
+                >
+                  Get 50% off | $12.50{" "}
+                  <span className="line-through text-gray-300">$25</span>
+                </button>
+                <button
+                  disabled={jobsFeedback.trim().length < 25}
+                  onClick={() => setStep("doneCancel")}
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    jobsFeedback.trim().length >= 25
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Complete cancellation
+                </button>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <Image
+                src="/empire-state-compressed.jpg"
+                alt="City skyline"
+                width={1200}
+                height={900}
+                priority
+                className="h-48 sm:h-64 md:h-full w-full object-cover rounded-xl ring-1 ring-black/5"
+              />
+            </div>
+          </div>
+        )}
+        {/* Step 21: Done Cancel */}
+        {step === "doneCancel" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
+            <div className="order-2 md:order-1 space-y-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Sorry to see you go, mate.
+              </h3>
+              <p className="text-lg text-gray-700">
+                Thanks for being with us, and you’re always welcome back.
+              </p>
+              <p className="text-sm text-gray-600">
+                Your subscription is set to end on{" "}
+                <span className="font-semibold">XX date</span>. You’ll still
+                have full access until then. No further charges after that.
+              </p>
+              <p className="text-xs text-gray-500">
+                Changed your mind? You can reactivate anytime before your end
+                date.
+              </p>
+
+              <button
+                onClick={() => router.push("/")}
+                className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
+              >
+                Back to Jobs
+              </button>
+            </div>
+
             <div className="order-1 md:order-2">
               <Image
                 src="/empire-state-compressed.jpg"
