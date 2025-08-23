@@ -74,6 +74,38 @@ export default function CancelFlowPage() {
 
   const [loadingVariant, setLoadingVariant] = useState(true);
 
+  async function finalizeCancellation({
+    reason,
+    accepted_downsell,
+  }: {
+    reason: string;
+    accepted_downsell: boolean;
+  }) {
+    try {
+      const res = await fetch("/cancel/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: "550e8400-e29b-41d4-a716-446655440001", // TODO replace with real userId
+          reason,
+          accepted_downsell,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to finalize cancellation");
+
+      const data = await res.json();
+      if (data.success) {
+        setStep("doneCancel");
+      } else {
+        alert("Something went wrong saving cancellation.");
+      }
+    } catch (e) {
+      console.error("Finalize cancel error:", e);
+      alert("Could not finalize cancellation. Please try again.");
+    }
+  }
+
   useEffect(() => {
     async function fetchVariant() {
       try {
@@ -472,7 +504,12 @@ export default function CancelFlowPage() {
               </p>
 
               <button
-                onClick={() => router.push("/")}
+                onClick={() =>
+                  finalizeCancellation({
+                    reason: "Cancelled after landing a job (visa sorted)",
+                    accepted_downsell: false,
+                  })
+                }
                 className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
               >
                 Finish
@@ -567,7 +604,13 @@ export default function CancelFlowPage() {
                 </p>
               </div>
               <button
-                onClick={() => router.push("/")}
+                onClick={() =>
+                  finalizeCancellation({
+                    reason:
+                      "Cancelled after landing a job (visa not sponsored)",
+                    accepted_downsell: false,
+                  })
+                }
                 className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
               >
                 Finish
@@ -1092,7 +1135,10 @@ export default function CancelFlowPage() {
                       );
                       return;
                     }
-                    alert("Proceed with cancellation flow");
+                    finalizeCancellation({
+                      reason: `Too expensive (max willing to pay: ${maxPrice})`,
+                      accepted_downsell: false,
+                    });
                   }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     maxPrice.trim()
@@ -1175,7 +1221,12 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={platformFeedback.trim().length < 25}
-                  onClick={() => setStep("doneCancel")}
+                  onClick={() =>
+                    finalizeCancellation({
+                      reason: `Platform not helpful: ${platformFeedback}`,
+                      accepted_downsell: false,
+                    })
+                  }
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     platformFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1251,7 +1302,12 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() => setStep("doneCancel")}
+                  onClick={() =>
+                    finalizeCancellation({
+                      reason: `Not enough relevant jobs: ${jobsFeedback}`,
+                      accepted_downsell: false,
+                    })
+                  }
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1325,7 +1381,12 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() => setStep("doneCancel")}
+                  onClick={() =>
+                    finalizeCancellation({
+                      reason: `Decided not to move: ${jobsFeedback}`,
+                      accepted_downsell: false,
+                    })
+                  }
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1399,7 +1460,12 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() => setStep("doneCancel")}
+                  onClick={() =>
+                    finalizeCancellation({
+                      reason: `Other: ${jobsFeedback}`,
+                      accepted_downsell: false,
+                    })
+                  }
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
