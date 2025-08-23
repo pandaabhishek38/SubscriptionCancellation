@@ -5,6 +5,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+function sanitizeInput(input: string): string {
+  // Remove HTML tags
+  const withoutTags = input.replace(/<\/?[^>]+(>|$)/g, "");
+  // Trim whitespace
+  return withoutTags.trim();
+}
+
 type Step =
   | "jobQuestion"
   | "jobCongrats"
@@ -469,7 +476,15 @@ export default function CancelFlowPage() {
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={() => setStep("doneCongrats")}
+                onClick={async () => {
+                  await finalizeCancellation({
+                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
+                      visaType
+                    )}`,
+                    accepted_downsell: false,
+                  });
+                  setStep("doneCongrats"); // 👈 ensure flow continues
+                }}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
@@ -547,7 +562,15 @@ export default function CancelFlowPage() {
               />
               <button
                 disabled={!visaTypeNoSupport.trim()}
-                onClick={() => setStep("doneNoSupport")}
+                onClick={async () => {
+                  await finalizeCancellation({
+                    reason: `Cancelled after job + visa type chosen (No support): ${sanitizeInput(
+                      visaTypeNoSupport
+                    )}`,
+                    accepted_downsell: false,
+                  });
+                  setStep("doneNoSupport"); // 👈 ensure flow continues
+                }}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaTypeNoSupport.trim()
                     ? "bg-black text-white hover:bg-gray-800"
@@ -654,7 +677,15 @@ export default function CancelFlowPage() {
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={() => setStep("doneCongrats")}
+                onClick={async () => {
+                  await finalizeCancellation({
+                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
+                      visaType
+                    )}`,
+                    accepted_downsell: false,
+                  });
+                  setStep("doneCongrats"); // 👈 ensure the thank-you screen still shows
+                }}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
@@ -701,7 +732,15 @@ export default function CancelFlowPage() {
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={() => setStep("doneNoSupport")}
+                onClick={async () => {
+                  await finalizeCancellation({
+                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
+                      visaType
+                    )}`,
+                    accepted_downsell: false,
+                  });
+                  setStep("doneNoSupport"); // 👈 ensure flow continues to Step 9 page
+                }}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
@@ -1108,10 +1147,17 @@ export default function CancelFlowPage() {
                   type="text"
                   placeholder="$"
                   value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
+                  onChange={(e) => {
+                    setMaxPrice(e.target.value);
+                    setPriceError(""); // clear error while typing
+                  }}
                   className="w-full rounded-lg border border-gray-400 text-gray-800 p-3 text-sm
              placeholder-gray-500 focus:ring-2 focus:ring-black focus:border-black focus:outline-none"
                 />
+
+                <p className="text-xs text-gray-500">
+                  Please enter a maximum price
+                </p>
 
                 {priceError && (
                   <p className="text-sm text-red-600">{priceError}</p>
@@ -1130,15 +1176,16 @@ export default function CancelFlowPage() {
                 <button
                   onClick={() => {
                     if (!maxPrice.trim()) {
-                      setPriceError(
-                        "Please enter a maximum price before continuing."
-                      );
+                      setPriceError("This field is required.");
                       return;
                     }
                     finalizeCancellation({
-                      reason: `Too expensive (max willing to pay: ${maxPrice})`,
+                      reason: `Too expensive (max willing to pay: ${sanitizeInput(
+                        maxPrice
+                      )})`,
                       accepted_downsell: false,
                     });
+                    setStep("doneCancel");
                   }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     maxPrice.trim()
@@ -1194,11 +1241,19 @@ export default function CancelFlowPage() {
                   setPlatformError(false);
                 }}
                 className="w-full rounded-lg border border-gray-400 text-gray-800 placeholder-gray-500
-           p-3 text-sm focus:ring-2 focus:ring-black focus:border-black focus:outline-none"
+    p-3 text-sm focus:ring-2 focus:ring-black focus:border-black focus:outline-none"
               />
+
               <p className="text-xs text-gray-500">
                 Min 25 characters ({platformFeedback.length}/25)
               </p>
+
+              {platformFeedback.length > 0 && platformFeedback.length < 25 && (
+                <p className="text-sm text-red-600">
+                  Please enter at least 25 characters so we can understand your
+                  feedback*
+                </p>
+              )}
 
               {/* Action buttons */}
               <div className="flex flex-col space-y-3 pt-4">
@@ -1221,12 +1276,15 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={platformFeedback.trim().length < 25}
-                  onClick={() =>
-                    finalizeCancellation({
-                      reason: `Platform not helpful: ${platformFeedback}`,
+                  onClick={async () => {
+                    await finalizeCancellation({
+                      reason: `Platform not helpful: ${sanitizeInput(
+                        platformFeedback
+                      )}`,
                       accepted_downsell: false,
-                    })
-                  }
+                    });
+                    setStep("doneCancel"); // 👈 ensure it always goes to Step 21
+                  }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     platformFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1272,15 +1330,17 @@ export default function CancelFlowPage() {
                 rows={3}
                 placeholder="Type your feedback..."
               />
-              {jobsFeedback.length < 25 && (
+
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              {jobsFeedback.length > 0 && jobsFeedback.length < 25 && (
                 <p className="text-sm text-red-600">
                   Please enter at least 25 characters so we can understand your
                   feedback*
                 </p>
               )}
-              <p className="text-xs text-gray-500">
-                Min 25 characters ({jobsFeedback.length}/25)
-              </p>
 
               <div className="flex flex-col space-y-3 pt-4">
                 <button
@@ -1302,12 +1362,15 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() =>
-                    finalizeCancellation({
-                      reason: `Not enough relevant jobs: ${jobsFeedback}`,
+                  onClick={async () => {
+                    await finalizeCancellation({
+                      reason: `Not enough relevant jobs: ${sanitizeInput(
+                        jobsFeedback
+                      )}`,
                       accepted_downsell: false,
-                    })
-                  }
+                    });
+                    setStep("doneCancel"); // 👈 always transition to Step 21
+                  }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1351,15 +1414,17 @@ export default function CancelFlowPage() {
                 rows={3}
                 placeholder="Type your feedback..."
               />
-              {jobsFeedback.length < 25 && (
+
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              {jobsFeedback.length > 0 && jobsFeedback.length < 25 && (
                 <p className="text-sm text-red-600">
                   Please enter at least 25 characters so we can understand your
                   feedback*
                 </p>
               )}
-              <p className="text-xs text-gray-500">
-                Min 25 characters ({jobsFeedback.length}/25)
-              </p>
 
               <div className="flex flex-col space-y-3 pt-4">
                 <button
@@ -1381,12 +1446,15 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() =>
-                    finalizeCancellation({
-                      reason: `Decided not to move: ${jobsFeedback}`,
+                  onClick={async () => {
+                    await finalizeCancellation({
+                      reason: `Decided not to move: ${sanitizeInput(
+                        jobsFeedback
+                      )}`,
                       accepted_downsell: false,
-                    })
-                  }
+                    });
+                    setStep("doneCancel"); // 👈 ensure receipt page
+                  }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"
@@ -1430,15 +1498,17 @@ export default function CancelFlowPage() {
                 rows={3}
                 placeholder="Type your feedback..."
               />
-              {jobsFeedback.length < 25 && (
+
+              <p className="text-xs text-gray-500">
+                Min 25 characters ({jobsFeedback.length}/25)
+              </p>
+
+              {jobsFeedback.length > 0 && jobsFeedback.length < 25 && (
                 <p className="text-sm text-red-600">
                   Please enter at least 25 characters so we can understand your
                   feedback*
                 </p>
               )}
-              <p className="text-xs text-gray-500">
-                Min 25 characters ({jobsFeedback.length}/25)
-              </p>
 
               <div className="flex flex-col space-y-3 pt-4">
                 <button
@@ -1460,12 +1530,13 @@ export default function CancelFlowPage() {
 
                 <button
                   disabled={jobsFeedback.trim().length < 25}
-                  onClick={() =>
-                    finalizeCancellation({
-                      reason: `Other: ${jobsFeedback}`,
+                  onClick={async () => {
+                    await finalizeCancellation({
+                      reason: `Other: ${sanitizeInput(jobsFeedback)}`,
                       accepted_downsell: false,
-                    })
-                  }
+                    });
+                    setStep("doneCancel"); // 👈 consistent final page
+                  }}
                   className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                     jobsFeedback.trim().length >= 25
                       ? "bg-red-600 text-white hover:bg-red-700"

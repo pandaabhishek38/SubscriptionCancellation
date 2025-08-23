@@ -1,20 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import {
+  sanitize,
+  isValidUUID,
+  validateReason,
+  validateDownsell,
+} from "@/lib/validate";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { userId, reason, accepted_downsell } = body as {
-      userId: string;
-      reason?: string;
-      accepted_downsell?: boolean;
-    };
-
-    if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    // 1️⃣ CSRF origin check
+    const origin = req.headers.get("origin");
+    if (origin && !origin.startsWith("http://localhost:3000")) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
     }
 
-    // 1️⃣ Get subscription for this user
+    // 2️⃣ Parse & validate inputs
+    const { userId, reason, accepted_downsell } = await req.json();
+
+    if (!isValidUUID(userId)) {
+      return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+    }
+
+    const reasonError = validateReason(reason);
+    if (reasonError) {
+      return NextResponse.json({ error: reasonError }, { status: 400 });
+    }
+
+    const downsellError = validateDownsell(accepted_downsell);
+    if (downsellError) {
+      return NextResponse.json({ error: downsellError }, { status: 400 });
+    }
+
+    const cleanReason = sanitize(reason);
+
+    // 3️⃣ Get subscription
     const { data: subscription, error: subError } = await supabaseAdmin
       .from("subscriptions")
       .select("id, status")
@@ -29,7 +49,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2️⃣ Mark subscription as pending_cancellation
+    // 4️⃣ Mark subscription as pending_cancellation
     const { error: updateError } = await supabaseAdmin
       .from("subscriptions")
       .update({ status: "pending_cancellation" })
@@ -43,12 +63,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3️⃣ Update existing cancellation row with reason + accepted_downsell
+    // 5️⃣ Update existing cancellation row (not insert)
     const { error: cancelUpdateError } = await supabaseAdmin
       .from("cancellations")
       .update({
-        reason: reason || null,
-        accepted_downsell: accepted_downsell ?? false,
+        reason: cleanReason,
+        accepted_downsell,
       })
       .eq("user_id", userId);
 
@@ -61,10 +81,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    console.error("Finalize cancel error:", e);
+  } catch (err: any) {
+    console.error("Finalize cancel error:", err);
     return NextResponse.json(
-      { error: e?.message || "Failed to finalize cancellation" },
+      { error: err?.message || "Failed to finalize cancellation" },
       { status: 500 }
     );
   }
