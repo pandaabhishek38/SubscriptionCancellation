@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import ProgressBar from "@/components/ProgressBar";
 
 function sanitizeInput(input: string): string {
   // Remove HTML tags
@@ -95,7 +96,7 @@ export default function CancelFlowPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "550e8400-e29b-41d4-a716-446655440002", // replace with actual user
+          userId: "550e8400-e29b-41d4-a716-446655440001", // replace with actual user
           reason,
           accepted_downsell,
         }),
@@ -157,7 +158,14 @@ export default function CancelFlowPage() {
       <div className="w-full max-w-5xl rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-          {step === "jobCongrats" && (
+          {/* Back button */}
+          {![
+            "jobQuestion",
+            "doneCongrats",
+            "doneNoSupport",
+            "downsellAccepted",
+            "doneCancel",
+          ].includes(step) && (
             <button
               onClick={() => setStep("jobQuestion")}
               className="text-sm text-gray-500 hover:text-gray-700"
@@ -165,9 +173,55 @@ export default function CancelFlowPage() {
               ← Back
             </button>
           )}
-          <h2 className="text-sm sm:text-base font-medium text-gray-800 flex-1 text-center">
-            Subscription Cancellation
-          </h2>
+
+          {/* Title + ProgressBar inline */}
+          <div className="flex-1 flex items-center justify-center space-x-4">
+            <h2 className="text-sm sm:text-base font-medium text-gray-800">
+              Subscription Cancellation
+            </h2>
+            {(() => {
+              // Condition 1: Step 2 & 12 → Step 1 of 3 (all gray, first filled)
+              if (["jobCongrats", "downsellOffer"].includes(step)) {
+                return <ProgressBar currentStep={1} totalSteps={3} />;
+              }
+
+              // Condition 2: Step 3 & 14 → Step 2 of 3 (first green, rest gray)
+              if (["feedback", "downsellReason"].includes(step)) {
+                return <ProgressBar currentStep={2} totalSteps={3} />;
+              }
+
+              // Condition 3: Steps 4,5,6,8,10,11,15,16–20 → Step 3 of 3 (two green filled, last gray)
+              if (
+                [
+                  "visaMM",
+                  "visaNoMM",
+                  "visaType",
+                  "visaTypeNoSupport",
+                  "visaTypeNoMMYes",
+                  "visaTypeNoMMNo",
+                  "downsellReasonMain",
+                  "reasonTooExpensive",
+                  "reasonPlatform",
+                  "reasonJobs",
+                  "reasonNotMove",
+                  "reasonOther",
+                ].includes(step)
+              ) {
+                return <ProgressBar currentStep={3} totalSteps={3} />;
+              }
+
+              // Condition 4: Steps 7,9,21 → Complete (all green bars filled)
+              if (
+                ["doneCongrats", "doneNoSupport", "doneCancel"].includes(step)
+              ) {
+                return <ProgressBar currentStep={3} totalSteps={3} complete />;
+              }
+
+              return null;
+            })()}
+          </div>
+
+          {/* Close button */}
           <button
             aria-label="Close"
             onClick={() => router.push("/")}
@@ -176,6 +230,7 @@ export default function CancelFlowPage() {
             ✕
           </button>
         </div>
+
         {/* Step 1: Did you get a job? */}
         {step === "jobQuestion" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -207,7 +262,7 @@ export default function CancelFlowPage() {
                 </button>
               </div>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -271,7 +326,7 @@ export default function CancelFlowPage() {
                 Continue
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -283,6 +338,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 3: Feedback */}
         {step === "feedback" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -325,7 +381,7 @@ export default function CancelFlowPage() {
                 Continue
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -384,12 +440,12 @@ export default function CancelFlowPage() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
 
             {/* Right: Image */}
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -440,7 +496,7 @@ export default function CancelFlowPage() {
                   if (visaNoMMAnswer === "Yes") {
                     setStep("visaTypeNoMMYes");
                   } else {
-                    setStep("visaTypeNoMMNo");
+                    setStep("visaTypeNoSupport");
                   }
                 }}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
@@ -449,10 +505,10 @@ export default function CancelFlowPage() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -464,17 +520,35 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
-        {/* Step 6: Visa type */}
+        {/* Step 6: Visa type (follow-up to Step 4: visaMM) */}
         {step === "visaType" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
             <div className="order-2 md:order-1 space-y-6">
               <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                 We helped you land the job, now let’s help you secure your visa.
               </h3>
+
+              {/* Previous Q&A with selected answer only */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  Is your company providing an immigration lawyer to help with
+                  your visa?*
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    checked
+                    readOnly
+                    className="h-4 w-4 text-black border-gray-300"
+                  />
+                  <span className="text-sm text-gray-800">{visaAnswer}</span>
+                </div>
+              </div>
+
+              {/* New follow-up question */}
               <p className="text-sm text-gray-600">
                 What visa will you be applying for?*
               </p>
-
               <input
                 type="text"
                 placeholder="Enter visa type..."
@@ -485,17 +559,19 @@ export default function CancelFlowPage() {
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={() => setStep("doneCongrats")} // ✅ no finalizeCancellation here
+                onClick={() => setStep("doneCongrats")}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
-            <div className="order-1 md:order-2">
+
+            {/* Right: Image only on desktop */}
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -507,6 +583,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 7: Done */}
         {step === "doneCongrats" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -534,7 +611,7 @@ export default function CancelFlowPage() {
                 Finish
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -554,6 +631,27 @@ export default function CancelFlowPage() {
               <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                 We helped you land the job, now let’s help you secure your visa.
               </h3>
+
+              {/* Previous Q&A from Step 5 (locked) */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  Is your company providing an immigration lawyer to help with
+                  your visa?*
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    checked
+                    readOnly
+                    className="h-4 w-4 text-black border-gray-300"
+                  />
+                  <span className="text-sm text-gray-800">
+                    {visaNoMMAnswer || "No"}
+                  </span>
+                </div>
+              </div>
+
+              {/* New follow-up question */}
               <p className="text-sm text-gray-600">
                 We can connect you with one of our trusted partners. Which visa
                 would you like to apply for?*
@@ -575,10 +673,12 @@ export default function CancelFlowPage() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
-            <div className="order-1 md:order-2">
+
+            {/* Right: Image only on desktop */}
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -590,6 +690,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 9: doneNoSupport */}
         {step === "doneNoSupport" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -645,7 +746,7 @@ export default function CancelFlowPage() {
               </button>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -666,14 +767,28 @@ export default function CancelFlowPage() {
                 You landed the job!{" "}
                 <span className="italic">That’s what we live for.</span>
               </h3>
-              <p className="text-sm text-gray-600">
-                Is your company providing an immigration lawyer to help with
-                your visa?
-              </p>
+
+              {/* Previous Q&A with selected answer only */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  Is your company providing an immigration lawyer to help with
+                  your visa?*
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    checked
+                    readOnly
+                    className="h-4 w-4 text-black border-gray-300"
+                  />
+                  <span className="text-sm text-gray-800">{"Yes"}</span>
+                </div>
+              </div>
+
+              {/* New follow-up question */}
               <p className="text-sm text-gray-600">
                 What visa will you be applying for?*
               </p>
-
               <input
                 type="text"
                 placeholder="Enter visa type..."
@@ -684,17 +799,19 @@ export default function CancelFlowPage() {
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={() => setStep("doneCongrats")} // ✅ move forward only
+                onClick={() => setStep("doneCongrats")}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
-            <div className="order-1 md:order-2">
+
+            {/* Right: Image only on desktop */}
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -715,13 +832,31 @@ export default function CancelFlowPage() {
                 You landed the job!{" "}
                 <span className="italic">That’s what we live for.</span>
               </h3>
-              <p className="text-sm text-gray-600">
-                We can connect you with one of our trusted partners.
-              </p>
-              <p className="text-sm text-gray-600">
-                Which visa would you like to apply for?*
-              </p>
 
+              {/* Previous Q&A with locked answer */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  Is your company providing an immigration lawyer to help with
+                  your visa?*
+                </p>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    checked
+                    readOnly
+                    className="h-4 w-4 text-black border-gray-300"
+                  />
+                  <span className="text-sm text-gray-800">
+                    {visaNoMMAnswer}
+                  </span>
+                </div>
+              </div>
+
+              {/* New follow-up question */}
+              <p className="text-sm text-gray-600">
+                We can connect you with one of our trusted partners. Which visa
+                would you like to apply for?*
+              </p>
               <input
                 type="text"
                 placeholder="Enter visa type..."
@@ -739,10 +874,12 @@ export default function CancelFlowPage() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Continue
+                Complete Cancellation
               </button>
             </div>
-            <div className="order-1 md:order-2">
+
+            {/* Right: Image only on desktop */}
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -754,6 +891,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 12: Downsell Offer */}
         {step === "downsellOffer" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -819,7 +957,7 @@ export default function CancelFlowPage() {
                 No thanks
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -865,7 +1003,7 @@ export default function CancelFlowPage() {
                 Land your dream role
               </button>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1009,7 +1147,7 @@ export default function CancelFlowPage() {
               </div>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1116,7 +1254,7 @@ export default function CancelFlowPage() {
               </div>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1201,7 +1339,7 @@ export default function CancelFlowPage() {
               </div>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1299,7 +1437,7 @@ export default function CancelFlowPage() {
               </div>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1384,7 +1522,7 @@ export default function CancelFlowPage() {
                 </button>
               </div>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1468,7 +1606,7 @@ export default function CancelFlowPage() {
                 </button>
               </div>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1550,7 +1688,7 @@ export default function CancelFlowPage() {
                 </button>
               </div>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 hidden md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
@@ -1590,7 +1728,7 @@ export default function CancelFlowPage() {
               </button>
             </div>
 
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 md:block">
               <Image
                 src="/empire-state-compressed.jpg"
                 alt="City skyline"
