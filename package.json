@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -f seed.sql",
-    "db:setup": "npm run db:seed"
+    "db:seed": "PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supabase/seed.sql",
+    "db:migrate": "PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supabase/migrations/0001_init.sql",
+    "db:setup": "npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.5",

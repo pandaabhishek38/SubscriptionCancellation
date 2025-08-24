@@ -20,6 +20,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
     }
 
+    // 3️⃣ Get subscription ID for user (needed for cancellations row)
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (subError || !subscription) {
+      console.error("Subscription lookup error:", subError);
+      return NextResponse.json(
+        { error: "No subscription found for user" },
+        { status: 404 }
+      );
+    }
+
     // 3️⃣ Check if cancellation already exists
     const { data: existing, error: selectError } = await supabaseAdmin
       .from("cancellations")
@@ -44,10 +59,15 @@ export async function POST(req: Request) {
 
       const { error: insertError } = await supabaseAdmin
         .from("cancellations")
-        .insert({
-          user_id: userId,
-          downsell_variant: variant,
-        });
+        .upsert(
+          {
+            user_id: userId,
+            subscription_id: subscription.id, // 👈 added
+            downsell_variant: variant,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" } // 👈 ensures one row per user
+        );
 
       if (insertError) {
         console.error("Supabase INSERT error:", insertError);

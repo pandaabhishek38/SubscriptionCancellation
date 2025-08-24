@@ -95,7 +95,7 @@ export default function CancelFlowPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "550e8400-e29b-41d4-a716-446655440003", // replace with actual user
+          userId: "550e8400-e29b-41d4-a716-446655440002", // replace with actual user
           reason,
           accepted_downsell,
         }),
@@ -128,7 +128,7 @@ export default function CancelFlowPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: "550e8400-e29b-41d4-a716-446655440003", // user1@example.com
+            userId: "550e8400-e29b-41d4-a716-446655440001", // user1@example.com
           }),
           // ⚠️ replace with real user id
         });
@@ -561,14 +561,14 @@ export default function CancelFlowPage() {
               <input
                 type="text"
                 placeholder="Enter visa type..."
-                value={visaType}
-                onChange={(e) => setVisaType(e.target.value)}
+                value={visaTypeNoSupport}
+                onChange={(e) => setVisaTypeNoSupport(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
               />
 
               <button
                 disabled={!visaTypeNoSupport.trim()}
-                onClick={() => setStep("doneNoSupport")} // ✅ only forward
+                onClick={() => setStep("doneNoSupport")}
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaTypeNoSupport.trim()
                     ? "bg-black text-white hover:bg-gray-800"
@@ -990,8 +990,19 @@ export default function CancelFlowPage() {
                 </button>
 
                 <button
+                  disabled={
+                    !answers.rolesApplied ||
+                    !answers.companiesEmailed ||
+                    !answers.companiesInterviewed
+                  }
                   onClick={() => setStep("downsellReasonMain")}
-                  className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-red-600 text-white hover:bg-red-700"
+                  className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
+                    answers.rolesApplied &&
+                    answers.companiesEmailed &&
+                    answers.companiesInterviewed
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
                 >
                   Continue
                 </button>

@@ -53,7 +53,8 @@ export async function POST(req: Request) {
     const { error: updateError } = await supabaseAdmin
       .from("subscriptions")
       .update({ status: "pending_cancellation" })
-      .eq("id", subscription.id);
+      .eq("id", subscription.id)
+      .eq("status", "active"); // 👈 ensures only active subs are changed
 
     if (updateError) {
       console.error("Subscription update error:", updateError);
@@ -63,19 +64,31 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5️⃣ Update existing cancellation row (not insert)
-    const { error: cancelUpdateError } = await supabaseAdmin
+    // 5️⃣ Fetch existing cancellation row (to preserve downsell_variant)
+    const { data: existingCancel } = await supabaseAdmin
       .from("cancellations")
-      .update({
-        reason: cleanReason,
-        accepted_downsell,
-      })
-      .eq("user_id", userId);
+      .select("downsell_variant")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-    if (cancelUpdateError) {
-      console.error("Cancellation update error:", cancelUpdateError);
+    // 6️⃣ Upsert cancellation row
+    const { error: cancelUpsertError } = await supabaseAdmin
+      .from("cancellations")
+      .upsert(
+        {
+          user_id: userId,
+          subscription_id: subscription.id,
+          downsell_variant: existingCancel?.downsell_variant ?? "A", // 👈 reuse or default
+          reason: cleanReason,
+          accepted_downsell,
+        },
+        { onConflict: "user_id" } // 👈 ensures uniqueness
+      );
+
+    if (cancelUpsertError) {
+      console.error("Cancellation upsert error:", cancelUpsertError);
       return NextResponse.json(
-        { error: "Failed to update cancellation record" },
+        { error: "Failed to save cancellation record" },
         { status: 500 }
       );
     }
