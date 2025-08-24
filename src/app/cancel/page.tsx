@@ -84,16 +84,18 @@ export default function CancelFlowPage() {
   async function finalizeCancellation({
     reason,
     accepted_downsell,
+    stayOnPage = false, // 👈 new flag
   }: {
     reason: string;
     accepted_downsell: boolean;
+    stayOnPage?: boolean;
   }) {
     try {
       const res = await fetch("/cancel/finalize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "550e8400-e29b-41d4-a716-446655440001", // TODO replace with real userId
+          userId: "550e8400-e29b-41d4-a716-446655440003", // replace with actual user
           reason,
           accepted_downsell,
         }),
@@ -103,7 +105,13 @@ export default function CancelFlowPage() {
 
       const data = await res.json();
       if (data.success) {
-        setStep("doneCancel");
+        if (stayOnPage) {
+          // 👇 instead of Step 21, send user home
+          router.push("/");
+        } else {
+          // 👇 only Step 16–20 go here
+          setStep("doneCancel");
+        }
       } else {
         alert("Something went wrong saving cancellation.");
       }
@@ -120,7 +128,7 @@ export default function CancelFlowPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: "550e8400-e29b-41d4-a716-446655440001", // user1@example.com
+            userId: "550e8400-e29b-41d4-a716-446655440003", // user1@example.com
           }),
           // ⚠️ replace with real user id
         });
@@ -288,12 +296,13 @@ export default function CancelFlowPage() {
               </p>
 
               <textarea
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
                 rows={4}
                 placeholder="Type your feedback..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
               />
+
               <p className="text-xs text-gray-500">
                 Min 25 characters ({feedback.length}/25)
               </p>
@@ -471,20 +480,12 @@ export default function CancelFlowPage() {
                 placeholder="Enter visa type..."
                 value={visaType}
                 onChange={(e) => setVisaType(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
               />
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={async () => {
-                  await finalizeCancellation({
-                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
-                      visaType
-                    )}`,
-                    accepted_downsell: false,
-                  });
-                  setStep("doneCongrats"); // 👈 ensure flow continues
-                }}
+                onClick={() => setStep("doneCongrats")} // ✅ no finalizeCancellation here
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
@@ -521,8 +522,11 @@ export default function CancelFlowPage() {
               <button
                 onClick={() =>
                   finalizeCancellation({
-                    reason: "Cancelled after landing a job (visa sorted)",
+                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
+                      visaType
+                    )}`,
                     accepted_downsell: false,
+                    stayOnPage: true, // 👈 stay here, don’t jump to Step 21
                   })
                 }
                 className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
@@ -542,6 +546,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 8: VisaTypeNoSupport */}
         {step === "visaTypeNoSupport" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -556,28 +561,21 @@ export default function CancelFlowPage() {
               <input
                 type="text"
                 placeholder="Enter visa type..."
-                value={visaTypeNoSupport}
-                onChange={(e) => setVisaTypeNoSupport(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                value={visaType}
+                onChange={(e) => setVisaType(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
               />
+
               <button
                 disabled={!visaTypeNoSupport.trim()}
-                onClick={async () => {
-                  await finalizeCancellation({
-                    reason: `Cancelled after job + visa type chosen (No support): ${sanitizeInput(
-                      visaTypeNoSupport
-                    )}`,
-                    accepted_downsell: false,
-                  });
-                  setStep("doneNoSupport"); // 👈 ensure flow continues
-                }}
+                onClick={() => setStep("doneNoSupport")} // ✅ only forward
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaTypeNoSupport.trim()
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Complete cancellation
+                Continue
               </button>
             </div>
             <div className="order-1 md:order-2">
@@ -626,12 +624,19 @@ export default function CancelFlowPage() {
                   .
                 </p>
               </div>
+
               <button
                 onClick={() =>
                   finalizeCancellation({
-                    reason:
-                      "Cancelled after landing a job (visa not sponsored)",
+                    reason: `Cancelled after landing a job (visa not sponsored)${
+                      visaType?.trim()
+                        ? `, visa type: ${sanitizeInput(visaType)}`
+                        : visaTypeNoSupport?.trim()
+                        ? `, visa type: ${sanitizeInput(visaTypeNoSupport)}`
+                        : ""
+                    }`,
                     accepted_downsell: false,
+                    stayOnPage: true, // 👈 stay here, don’t jump to Step 21
                   })
                 }
                 className="w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition bg-purple-600 text-white hover:bg-purple-700"
@@ -639,6 +644,7 @@ export default function CancelFlowPage() {
                 Finish
               </button>
             </div>
+
             <div className="order-1 md:order-2">
               <Image
                 src="/empire-state-compressed.jpg"
@@ -651,6 +657,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 10: Visa type (No MM, but company provides lawyer) */}
         {step === "visaTypeNoMMYes" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -672,27 +679,19 @@ export default function CancelFlowPage() {
                 placeholder="Enter visa type..."
                 value={visaType}
                 onChange={(e) => setVisaType(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
               />
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={async () => {
-                  await finalizeCancellation({
-                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
-                      visaType
-                    )}`,
-                    accepted_downsell: false,
-                  });
-                  setStep("doneCongrats"); // 👈 ensure the thank-you screen still shows
-                }}
+                onClick={() => setStep("doneCongrats")} // ✅ move forward only
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Complete cancellation
+                Continue
               </button>
             </div>
             <div className="order-1 md:order-2">
@@ -707,6 +706,7 @@ export default function CancelFlowPage() {
             </div>
           </div>
         )}
+
         {/* Step 11: Visa type (No MM, no lawyer) */}
         {step === "visaTypeNoMMNo" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-6">
@@ -727,27 +727,19 @@ export default function CancelFlowPage() {
                 placeholder="Enter visa type..."
                 value={visaType}
                 onChange={(e) => setVisaType(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-black focus:outline-none"
               />
 
               <button
                 disabled={visaType.trim().length < 1}
-                onClick={async () => {
-                  await finalizeCancellation({
-                    reason: `Cancelled after job + visa type chosen: ${sanitizeInput(
-                      visaType
-                    )}`,
-                    accepted_downsell: false,
-                  });
-                  setStep("doneNoSupport"); // 👈 ensure flow continues to Step 9 page
-                }}
+                onClick={() => setStep("doneNoSupport")} // ✅ only forward
                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-base font-medium transition ${
                   visaType.trim().length > 0
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Complete cancellation
+                Continue
               </button>
             </div>
             <div className="order-1 md:order-2">

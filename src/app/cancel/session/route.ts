@@ -1,32 +1,26 @@
 // src/app/api/cancel/session/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isValidUUID } from "@/lib/validate";
 import crypto from "crypto";
 
 type Variant = "A" | "B";
 
-function assertSameOrigin(req: NextRequest) {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  if (!origin || !host) return;
+export async function POST(req: Request) {
   try {
-    const o = new URL(origin);
-    if (o.host !== host) throw new Error("CSRF protection: invalid origin");
-  } catch {
-    throw new Error("CSRF protection: invalid origin");
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { userId } = body;
-
-    if (!userId) {
-      return new NextResponse("Missing userId", { status: 400 });
+    // 1️⃣ CSRF origin check
+    const origin = req.headers.get("origin");
+    if (origin && !origin.startsWith("http://localhost:3000")) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
     }
 
-    // 🔍 Debug: Try selecting existing cancellation
+    // 2️⃣ Parse + validate
+    const { userId } = await req.json();
+    if (!isValidUUID(userId)) {
+      return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+    }
+
+    // 3️⃣ Check if cancellation already exists
     const { data: existing, error: selectError } = await supabaseAdmin
       .from("cancellations")
       .select("downsell_variant")
@@ -34,29 +28,29 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (selectError) {
-      console.error("Supabase SELECT error:", selectError); // 👈 add this
+      console.error("Supabase SELECT error:", selectError);
       return NextResponse.json({ error: selectError.message }, { status: 500 });
     }
 
     let variant: Variant;
 
     if (existing?.downsell_variant) {
+      // Reuse existing variant
       variant = existing.downsell_variant as Variant;
     } else {
+      // Randomize A/B split deterministically
       const rand = crypto.randomInt(0, 2);
       variant = rand === 0 ? "A" : "B";
 
-      // 🔍 Debug: Try inserting cancellation
       const { error: insertError } = await supabaseAdmin
         .from("cancellations")
         .insert({
           user_id: userId,
           downsell_variant: variant,
-          created_at: new Date().toISOString(),
         });
 
       if (insertError) {
-        console.error("Supabase INSERT error:", insertError); // 👈 add this
+        console.error("Supabase INSERT error:", insertError);
         return NextResponse.json(
           { error: insertError.message },
           { status: 500 }
@@ -65,10 +59,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ variant });
-  } catch (e: any) {
-    console.error("Session POST error:", e);
-    return new NextResponse(e?.message || "Failed to start session", {
-      status: 400,
-    });
+  } catch (err: any) {
+    console.error("Session POST error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }
